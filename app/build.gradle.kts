@@ -1,3 +1,4 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -40,8 +41,6 @@ android {
 }
 
 dependencies {
-
-    // Dependencias originales del proyecto
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -51,31 +50,20 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // Navegacion de los laboratorios anteriores
     implementation(libs.androidx.navigation.compose)
-
-    // Para utilizar Serializable
     implementation(libs.kotlinx.serialization.json)
 
-    // Para cargar imagenes de internet con Coil
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
-    // Iconos de Material
     implementation("androidx.compose.material:material-icons-extended")
 
-    // Nuevas dependencias del Laboratorio 9
-
-    // Para utilizar ViewModel en Compose
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-
-    // Para observar StateFlow desde las pantallas
     implementation(libs.androidx.lifecycle.runtime.compose)
-
-    // Para utilizar corrutinas y delay
     implementation(libs.kotlinx.coroutines.android)
 
-    // Dependencias para pruebas
+    implementation(libs.androidx.datastore)
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

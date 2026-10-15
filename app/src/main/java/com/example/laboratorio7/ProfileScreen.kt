@@ -20,14 +20,28 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.map
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(onLogoutClick: () -> Unit) {
+
+    val context = LocalContext.current
+    val dataStorePreferences = androidx.compose.runtime.remember(context) {
+        DataStorePreferences(context)
+    }
+
+    // Obtenemos el nombre guardado en DataStore
+    val nombre by dataStorePreferences.userName.collectAsStateWithLifecycle(
+        initialValue = ""
+    )
 
     Scaffold(
         topBar = {
@@ -49,6 +63,7 @@ fun ProfileScreen(onLogoutClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(40.dp))
 
+            // Icono de perfil
             Icon(
                 imageVector = Icons.Filled.AccountCircle,
                 contentDescription = "Imagen de perfil",
@@ -58,17 +73,19 @@ fun ProfileScreen(onLogoutClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(40.dp))
 
+            // Nombre guardado del usuario
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Nombre:")
 
-                Text(text = "Jose Carlos Gonzalez Argueta")
+                Text(text = nombre)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Numero de carne
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween

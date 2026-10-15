@@ -10,8 +10,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -22,7 +27,11 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 
 @Composable
-fun LoginScreen(onLoginClick: () -> Unit) {
+fun LoginScreen(onLoginClick: (String) -> Unit) {
+
+    var nombre by rememberSaveable {
+        mutableStateOf("")
+    }
 
     Column(
         modifier = Modifier
@@ -34,7 +43,6 @@ fun LoginScreen(onLoginClick: () -> Unit) {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Titulo de la app
         Text(
             text = "Rick and Morty",
             fontSize = 32.sp,
@@ -44,7 +52,6 @@ fun LoginScreen(onLoginClick: () -> Unit) {
 
         Spacer(modifier = Modifier.height(25.dp))
 
-        // Logo
         AsyncImage(
             model = "https://upload.wikimedia.org/wikipedia/commons/b/b1/Rick_and_Morty.svg",
             contentDescription = "Logo de Rick and Morty",
@@ -54,11 +61,30 @@ fun LoginScreen(onLoginClick: () -> Unit) {
             contentScale = ContentScale.Fit
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(25.dp))
 
-        // Boton para ingresar
+        OutlinedTextField(
+            value = nombre,
+            onValueChange = {
+                nombre = it
+            },
+            label = {
+                Text("Nombre")
+            },
+            placeholder = {
+                Text("Escribe tu nombre")
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         Button(
-            onClick = onLoginClick,
+            onClick = {
+                onLoginClick(nombre.trim())
+            },
+            enabled = nombre.isNotBlank(),
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
