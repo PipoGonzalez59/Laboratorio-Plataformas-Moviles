@@ -7,12 +7,14 @@ import androidx.activity.compose.setContent
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.example.laboratorio7.ui.theme.Laboratorio7Theme
 import kotlinx.serialization.Serializable
 
 @Serializable
 data object LoginDestination
+
+@Serializable
+data object MainDestination
 
 @Serializable
 data object CharactersDestination
@@ -28,7 +30,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             Laboratorio7Theme {
 
-                // Controlador de navegacion
                 val navController = rememberNavController()
 
                 NavHost(
@@ -36,12 +37,12 @@ class MainActivity : ComponentActivity() {
                     startDestination = LoginDestination
                 ) {
 
-                    // Primera pantalla: Login
+                    // Pantalla Login
                     composable<LoginDestination> {
 
                         LoginScreen(
                             onLoginClick = {
-                                navController.navigate(CharactersDestination) {
+                                navController.navigate(MainDestination) {
                                     popUpTo<LoginDestination> {
                                         inclusive = true
                                     }
@@ -50,27 +51,14 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // Segunda pantalla: Lista de personajes
-                    composable<CharactersDestination> {
+                    // Pantalla principal
+                    composable<MainDestination> {
 
-                        CharactersScreen(
-                            onCharacterClick = { id ->
-                                navController.navigate(
-                                    CharacterDetailsDestination(id)
-                                )
-                            }
-                        )
-                    }
-
-                    // Tercera pantalla: Detalles del personaje
-                    composable<CharacterDetailsDestination> { backStackEntry ->
-
-                        val datos = backStackEntry.toRoute<CharacterDetailsDestination>()
-
-                        CharacterDetailsScreen(
-                            id = datos.id,
-                            onBackClick = {
-                                navController.popBackStack()
+                        MainScreen(
+                            onLogoutClick = {
+                                navController.navigate(LoginDestination) {
+                                    popUpTo(0)
+                                }
                             }
                         )
                     }
