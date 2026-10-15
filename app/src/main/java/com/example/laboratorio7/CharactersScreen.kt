@@ -15,12 +15,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,14 +28,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharactersScreen(onCharacterClick: (Int) -> Unit) {
+fun CharactersScreen(
+    onCharacterClick: (Int) -> Unit,
+    viewModel: CharactersViewModel = viewModel()
+) {
 
-    val characterDb = CharacterDb()
-    val characters = characterDb.getAllCharacters()
+    // Observamos el estado del ViewModel
+    val state = viewModel.state.collectAsStateWithLifecycle().value
 
     Scaffold(
         topBar = {
@@ -47,58 +52,86 @@ fun CharactersScreen(onCharacterClick: (Int) -> Unit) {
         }
     ) { innerPadding ->
 
-        LazyColumn(
+        // Aqui decidimos que mostrar segun el estado
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
 
-            items(characters) { character ->
+            if (state.isLoading) {
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            onCharacterClick(character.id)
-                        }
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // Pantalla de carga
+                LoadingScreen(
+                    onLoadingClick = {
+                        viewModel.showError()
+                    }
+                )
+
+            } else if (state.hasError) {
+
+                // Pantalla de error
+                ErrorScreen(
+                    onRetryClick = {
+                        viewModel.getCharacters()
+                    }
+                )
+
+            } else {
+
+                // Lista de personajes
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
                 ) {
 
-                    // Imagen del personaje
-                    AsyncImage(
-                        model = character.image,
-                        contentDescription = character.name,
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
+                    items(state.data) { character ->
 
-                    Spacer(modifier = Modifier.width(15.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onCharacterClick(character.id)
+                                }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
 
-                    // Informacion del personaje
-                    Column(
-                        verticalArrangement = Arrangement.Center
-                    ) {
+                            // Imagen del personaje
+                            AsyncImage(
+                                model = character.image,
+                                contentDescription = character.name,
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
 
-                        Text(
-                            text = character.name,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                            Spacer(modifier = Modifier.width(15.dp))
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                            // Informacion del personaje
+                            Column(
+                                verticalArrangement = Arrangement.Center
+                            ) {
 
-                        Text(
-                            text = "${character.species} - ${character.status}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                                Text(
+                                    text = character.name,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                Text(
+                                    text = "${character.species} - ${character.status}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        HorizontalDivider()
                     }
                 }
-
-                HorizontalDivider()
             }
         }
     }
