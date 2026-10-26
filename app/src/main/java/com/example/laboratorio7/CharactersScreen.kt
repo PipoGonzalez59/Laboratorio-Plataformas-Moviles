@@ -1,8 +1,8 @@
-
 package com.example.laboratorio7
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,8 +15,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -52,7 +58,6 @@ fun CharactersScreen(
         }
     ) { innerPadding ->
 
-        // Aqui decidimos que mostrar segun el estado
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -79,57 +84,131 @@ fun CharactersScreen(
 
             } else {
 
-                // Lista de personajes
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                // Filtro para mostrar solo favoritos
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            viewModel.changeFavoriteFilter()
+                        }
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    items(state.data) { character ->
+                    Checkbox(
+                        checked = state.onlyFavorites,
+                        onCheckedChange = {
+                            viewModel.changeFavoriteFilter()
+                        }
+                    )
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onCharacterClick(character.id)
-                                }
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                            // Imagen del personaje
-                            AsyncImage(
-                                model = character.image,
-                                contentDescription = character.name,
+                    Text(text = "Mostrar solo favoritos")
+                }
+
+                HorizontalDivider()
+
+                // Obtenemos los personajes que se van a mostrar
+                val characters = viewModel.getVisibleCharacters()
+
+                if (characters.isEmpty()) {
+
+                    // Mensaje cuando no hay personajes
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+
+                        Text(
+                            text = "No hay elementos a mostrar",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                } else {
+
+                    // Lista de personajes
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+
+                        items(
+                            items = characters,
+                            key = { it.id }
+                        ) { character ->
+
+                            Row(
                                 modifier = Modifier
-                                    .size(60.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-
-                            Spacer(modifier = Modifier.width(15.dp))
-
-                            // Informacion del personaje
-                            Column(
-                                verticalArrangement = Arrangement.Center
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onCharacterClick(character.id)
+                                    }
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
 
-                                Text(
-                                    text = character.name,
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.bodyLarge
+                                // Imagen del personaje
+                                AsyncImage(
+                                    model = character.image,
+                                    contentDescription = character.name,
+                                    modifier = Modifier
+                                        .size(60.dp)
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
                                 )
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.width(15.dp))
 
-                                Text(
-                                    text = "${character.species} - ${character.status}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                // Informacion del personaje
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+
+                                    Text(
+                                        text = character.name,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    Text(
+                                        text = "${character.species} - ${character.status}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                // Boton para marcar o desmarcar favorito
+                                IconButton(
+                                    onClick = {
+                                        viewModel.changeFavorite(character)
+                                    }
+                                ) {
+
+                                    Icon(
+                                        imageVector = if (character.isFavorite) {
+                                            Icons.Filled.Favorite
+                                        } else {
+                                            Icons.Outlined.FavoriteBorder
+                                        },
+                                        contentDescription = "Favorito",
+                                        tint = if (character.isFavorite) {
+                                            MaterialTheme.colorScheme.error
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        }
+                                    )
+                                }
                             }
-                        }
 
-                        HorizontalDivider()
+                            HorizontalDivider()
+                        }
                     }
                 }
             }

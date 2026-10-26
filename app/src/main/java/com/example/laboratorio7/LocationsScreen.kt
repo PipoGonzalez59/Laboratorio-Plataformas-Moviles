@@ -1,3 +1,4 @@
+
 package com.example.laboratorio7
 
 import androidx.compose.foundation.clickable
@@ -19,13 +20,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LocationsScreen(onLocationClick: (Int) -> Unit) {
+fun LocationsScreen(
+    onLocationClick: (Int) -> Unit,
+    viewModel: LocationsViewModel = viewModel()
+) {
 
-    val locationDb = LocationDb()
-    val locations = locationDb.getAllLocations()
+    // Observamos el estado del ViewModel
+    val state = viewModel.state.collectAsStateWithLifecycle().value
 
     Scaffold(
         topBar = {
@@ -37,41 +43,71 @@ fun LocationsScreen(onLocationClick: (Int) -> Unit) {
         }
     ) { innerPadding ->
 
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
 
-            items(locations) { location ->
+            if (state.isLoading) {
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            onLocationClick(location.id)
-                        }
-                        .padding(16.dp)
+                // Mostramos la pantalla de carga
+                LoadingScreen(
+                    onLoadingClick = {
+                        viewModel.showError()
+                    }
+                )
+
+            } else if (state.hasError) {
+
+                // Mostramos la pantalla de error
+                ErrorScreen(
+                    onRetryClick = {
+                        viewModel.getLocations()
+                    }
+                )
+
+            } else {
+
+                // Mostramos las ubicaciones obtenidas desde Room
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
                 ) {
 
-                    // Nombre de la ubicacion
-                    Text(
-                        text = location.name,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    items(
+                        items = state.data,
+                        key = { it.id }
+                    ) { location ->
 
-                    Spacer(modifier = Modifier.height(5.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onLocationClick(location.id)
+                                }
+                                .padding(16.dp)
+                        ) {
 
-                    // Tipo de ubicacion
-                    Text(
-                        text = location.type,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                            // Nombre de la ubicacion
+                            Text(
+                                text = location.name,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+
+                            Spacer(modifier = Modifier.height(5.dp))
+
+                            // Tipo de ubicacion
+                            Text(
+                                text = location.type,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        HorizontalDivider()
+                    }
                 }
-
-                HorizontalDivider()
             }
         }
     }

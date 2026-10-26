@@ -1,5 +1,6 @@
 package com.example.laboratorio7
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.List
@@ -11,7 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.padding
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -20,14 +21,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 
-// Grafos de navegacion
 @Serializable
 data object CharactersGraph
 
 @Serializable
 data object LocationsGraph
 
-// Destinos nuevos
 @Serializable
 data object LocationsDestination
 
@@ -50,7 +49,7 @@ fun MainScreen(onLogoutClick: () -> Unit) {
 
             NavigationBar {
 
-                // Boton Characters
+                // Boton de Characters
                 NavigationBarItem(
                     selected = rutaActual.contains("Characters"),
                     onClick = {
@@ -73,7 +72,7 @@ fun MainScreen(onLogoutClick: () -> Unit) {
                     }
                 )
 
-                // Boton Locations
+                // Boton de Locations
                 NavigationBarItem(
                     selected = rutaActual.contains("Locations") ||
                             rutaActual.contains("LocationDetails"),
@@ -97,7 +96,7 @@ fun MainScreen(onLogoutClick: () -> Unit) {
                     }
                 )
 
-                // Boton Profile
+                // Boton de Profile
                 NavigationBarItem(
                     selected = rutaActual.contains("Profile"),
                     onClick = {
@@ -134,7 +133,9 @@ fun MainScreen(onLogoutClick: () -> Unit) {
                 startDestination = CharactersDestination
             ) {
 
+                // Lista de personajes
                 composable<CharactersDestination> {
+
                     CharactersScreen(
                         onCharacterClick = { id ->
                             navController.navigate(
@@ -144,15 +145,21 @@ fun MainScreen(onLogoutClick: () -> Unit) {
                     )
                 }
 
+                // Detalles de personajes
                 composable<CharacterDetailsDestination> { backStackEntry ->
 
                     val datos = backStackEntry.toRoute<CharacterDetailsDestination>()
+
+                    val detailsViewModel: CharacterDetailsViewModel = viewModel(
+                        viewModelStoreOwner = backStackEntry
+                    )
 
                     CharacterDetailsScreen(
                         id = datos.id,
                         onBackClick = {
                             navController.popBackStack()
-                        }
+                        },
+                        viewModel = detailsViewModel
                     )
                 }
             }
@@ -162,7 +169,9 @@ fun MainScreen(onLogoutClick: () -> Unit) {
                 startDestination = LocationsDestination
             ) {
 
+                // Lista de ubicaciones
                 composable<LocationsDestination> {
+
                     LocationsScreen(
                         onLocationClick = { id ->
                             navController.navigate(
@@ -172,6 +181,7 @@ fun MainScreen(onLogoutClick: () -> Unit) {
                     )
                 }
 
+                // Detalles de ubicaciones
                 composable<LocationDetailsDestination> { backStackEntry ->
 
                     val datos = backStackEntry.toRoute<LocationDetailsDestination>()
@@ -185,8 +195,9 @@ fun MainScreen(onLogoutClick: () -> Unit) {
                 }
             }
 
-            // Pantalla Profile
+            // Pantalla de perfil
             composable<ProfileDestination> {
+
                 ProfileScreen(
                     onLogoutClick = onLogoutClick
                 )

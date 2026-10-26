@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -14,15 +16,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.laboratorio7.database.DatabaseProvider
 import com.example.laboratorio7.ui.theme.Laboratorio7Theme
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @Serializable
 data object LoginDestination
+
+@Serializable
+data object SyncDestination
 
 @Serializable
 data object MainDestination
@@ -51,16 +59,20 @@ fun AppNavigation() {
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
     val dataStorePreferences = remember(context) {
         DataStorePreferences(context)
     }
 
-    // Revisamos si hay una sesion guardada
+    val database = remember(context) {
+        DatabaseProvider.getDatabase(context)
+    }
+
+    // Revisamos si existe una sesion guardada
     val nombreGuardado by produceState<String?>(initialValue = null) {
         value = dataStorePreferences.getName()
     }
 
-    // Mostramos una carga mientras revisamos DataStore
     if (nombreGuardado == null) {
 
         Box(
@@ -74,9 +86,9 @@ fun AppNavigation() {
 
         val navController = rememberNavController()
 
-        // Elegimos la pantalla inicial
+        // Si hay sesion, revisamos Room antes de entrar a Main
         val pantallaInicial = if (nombreGuardado!!.isNotBlank()) {
-            MainDestination
+            SyncDestination
         } else {
             LoginDestination
         }
@@ -93,12 +105,9 @@ fun AppNavigation() {
                     onLoginClick = { nombre ->
 
                         scope.launch {
-
-                            // Guardamos el nombre
                             dataStorePreferences.saveName(nombre)
 
-                            // Navegamos a Main y eliminamos Login
-                            navController.navigate(MainDestination) {
+                            navController.navigate(SyncDestination) {
                                 popUpTo<LoginDestination> {
                                     inclusive = true
                                 }
@@ -106,6 +115,46 @@ fun AppNavigation() {
                         }
                     }
                 )
+            }
+
+            // Pantalla de sincronizacion
+            composable<SyncDestination> {
+
+                val syncViewModel: SyncViewModel = viewModel()
+                val isLoading by syncViewModel.isLoading.collectAsStateWithLifecycle()
+                val hasError by syncViewModel.hasError.collectAsStateWithLifecycle()
+
+                if (isLoading) {
+
+                    SyncScreen()
+
+                } else if (hasError) {
+
+                    // Si ocurre un error, permitimos reintentar
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Button(
+                            onClick = {
+                                syncViewModel.syncData()
+                            }
+                        ) {
+                            Text("Error al sincronizar. Reintentar")
+                        }
+                    }
+
+                } else {
+
+                    // Cuando termina la sincronizacion entramos a Main
+                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                        navController.navigate(MainDestination) {
+                            popUpTo<SyncDestination> {
+                                inclusive = true
+                            }
+                        }
+                    }
+                }
             }
 
             // Pantalla principal
@@ -116,10 +165,14 @@ fun AppNavigation() {
 
                         scope.launch {
 
+                            // Eliminamos los datos de Room
+                            database.characterDao().deleteAllCharacters()
+                            database.locationDao().deleteAllLocations()
+
                             // Eliminamos el nombre guardado
                             dataStorePreferences.deleteName()
 
-                            // Regresamos a Login y limpiamos el historial
+                            // Regresamos a Login
                             navController.navigate(LoginDestination) {
                                 popUpTo<MainDestination> {
                                     inclusive = true
@@ -132,3 +185,4 @@ fun AppNavigation() {
         }
     }
 }
+

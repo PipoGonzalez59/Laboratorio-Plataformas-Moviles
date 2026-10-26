@@ -1,3 +1,4 @@
+
 package com.example.laboratorio7
 
 import androidx.compose.foundation.layout.Arrangement
@@ -23,16 +24,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationDetailsScreen(
     id: Int,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    viewModel: LocationDetailsViewModel = viewModel()
 ) {
 
-    val locationDb = LocationDb()
-    val location = locationDb.getLocationById(id)
+    // Observamos el estado del ViewModel
+    val state = viewModel.state.collectAsStateWithLifecycle().value
 
     Scaffold(
         topBar = {
@@ -58,62 +62,94 @@ fun LocationDetailsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Spacer(modifier = Modifier.height(25.dp))
+            if (state.isLoading) {
 
-            // Nombre de la ubicacion
-            Text(
-                text = location.name,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // ID
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "ID:",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                // Pantalla de carga
+                LoadingScreen(
+                    onLoadingClick = {
+                        viewModel.showError()
+                    }
                 )
 
-                Text(text = location.id.toString())
-            }
+            } else if (state.hasError) {
 
-            Spacer(modifier = Modifier.height(15.dp))
-
-            // Tipo
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Type:",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                // Pantalla de error
+                ErrorScreen(
+                    onRetryClick = {
+                        viewModel.getLocation()
+                    }
                 )
 
-                Text(text = location.type)
-            }
+            } else {
 
-            Spacer(modifier = Modifier.height(15.dp))
+                val location = state.data
 
-            // Dimension
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Dimensions:",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (location != null) {
 
-                Text(text = location.dimension)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Spacer(modifier = Modifier.height(25.dp))
+
+                        // Nombre de la ubicacion
+                        Text(
+                            text = location.name,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(40.dp))
+
+                        // ID
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "ID:",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Text(text = location.id.toString())
+                        }
+
+                        Spacer(modifier = Modifier.height(15.dp))
+
+                        // Tipo
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Type:",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Text(text = location.type)
+                        }
+
+                        Spacer(modifier = Modifier.height(15.dp))
+
+                        // Dimension
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Dimensions:",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Text(text = location.dimension)
+                        }
+                    }
+                }
             }
         }
     }
